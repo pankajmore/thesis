@@ -1,4 +1,11 @@
-module Plug (thing) where
+module Plug (main') where
 
-thing :: Integer
-thing = 42
+main' :: Int -> IO Int
+main' v = do
+  putStrLn "Hello World!"
+  putStrLn $ show $ v
+  putStrLn $ show $ thing
+  return (v+1)
+
+thing :: String
+thing = "41"

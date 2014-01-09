@@ -7,15 +7,16 @@ main :: IO ()
 main = forever $ do
   putStrLn "Loading"
   make "Plug.hs" []
-  mv <- load "Plug.o" [] [] "thing"   -- also try 'load' here
+  mv <- load "Plug.o" [] [] "main'"
   putStrLn "Loaded"
   case mv of
     LoadFailure msgs -> putStrLn "fail" >> print msgs
     LoadSuccess m v -> do
       putStrLn "success"
-      print (v::Integer)
-      case hasChanged m of
-        True -> unloadAll m
+      st <- v (0 :: Int)
+      st <- v (st :: Int)
+      st <- v (st :: Int)
+      unloadAll m
   putStrLn "Press y to reload"
 
   getChar
