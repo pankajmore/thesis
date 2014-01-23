@@ -9,7 +9,7 @@ main = forever $ do
   r <- makeAll "PingPong.hs" []
   case r of
     MakeSuccess mc fp -> do
-      mv <- load fp [] ["/usr/lib/ghc-7.6.3/package.conf.d","/home/pankajm/.ghc/x86_64-linux-7.6.3/package.conf.d"] "main'"
+      mv <- load fp [] [] "main"
       putStrLn $ show $ mc
       putStrLn "Loaded"
       case mv of
