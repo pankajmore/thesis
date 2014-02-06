@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
-module SimpleLocalnet where
+--module SimpleLocalnet where
 
 import System.Environment (getArgs)
 import Control.Exception (evaluate)
@@ -13,9 +13,9 @@ import qualified MasterSlave
 rtable :: RemoteTable
 rtable = MasterSlave.__remoteTable initRemoteTable
 
-main' :: [String] -> IO ()
-main' args= do
-  --args <- getArgs
+main :: IO ()
+main = do
+  args <- getArgs
   case args of
     ["master", host, port, strSpawnStrategy, strN] -> do
       backend <- initializeBackend host port rtable

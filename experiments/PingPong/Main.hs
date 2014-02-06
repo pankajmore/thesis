@@ -20,5 +20,4 @@ main = forever $ do
         unloadAll m
     MakeFailure msgs -> putStrLn "failed to make" >> print msgs
   putStrLn "Press y to reload"
-
   getChar

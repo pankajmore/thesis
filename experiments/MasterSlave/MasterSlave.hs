@@ -9,7 +9,9 @@ import Control.Distributed.Process.Closure
 import PrimeFactors
 
 slave :: (ProcessId, Integer) -> Process ()
-slave (pid, n) = send pid (numPrimeFactors n)
+slave (pid, n) = do
+  liftIO $ print $ "got " ++ show n
+  send pid (numPrimeFactors n)
 
 remotable ['slave]
 
@@ -30,8 +32,8 @@ data SpawnStrategy = SpawnSyncWithReconnect
 
 master :: Integer -> SpawnStrategy -> [NodeId] -> Process Integer
 master n spawnStrategy slaves = do
+  liftIO $ print "started"
   us <- getSelfPid
-
   -- Distribute 1 .. n amongst the slave processes
   spawnLocal $ case spawnStrategy of
     SpawnSyncWithReconnect ->
@@ -47,6 +49,6 @@ master n spawnStrategy slaves = do
         spawnAsync there ($(mkClosure 'slave) (us, m))
         _ <- expectTimeout 0 :: Process (Maybe DidSpawn)
         return ()
-
+  liftIO $ print "spawned"
   -- Wait for the result
   sumIntegers n

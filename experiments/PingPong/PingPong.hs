@@ -1,29 +1,43 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable,ScopedTypeVariables #-}
 module PingPong where
 import Control.Concurrent ( threadDelay )
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
-import Network.Transport
+import Network.Transport ( closeTransport )
 import Network.Transport.TCP
 
-server :: ReceivePort Int-> Process ()
-server rPing = do
-    x <- receiveChan rPing
-    liftIO $ putStrLn $ "Got a ping! " ++ (show x)
+server :: Process ()
+server = do
+    (cid,x) :: (ProcessId,Int) <- expect
+    liftIO $ putStrLn $ "Got  a Ping with value : " ++ (show x)
+    case x of
+      5 -> do
+        liftIO $ putStrLn $ "STOP"
+        return ()
+      _ -> do
+        send cid x
+        liftIO $ putStrLn $ "Sent a Pong with value : " ++ (show x)
+        server
 
-client :: SendPort Int -> Process ()
-client sPing = do
-    sendChan sPing 42
-    liftIO $ putStrLn "Sent a Ping"
+client :: Int -> ProcessId -> Process ()
+client 10 sid = do
+  liftIO $ putStrLn "DONE"
+client c sid = do
+  me <- getSelfPid
+  send sid (me,c)
+  liftIO $ putStrLn $ "Sent a Ping with value : " ++ (show c)
+  (v :: Int) <- expect
+  liftIO $ putStrLn $ "Got  a Pong with value : " ++ (show v)
+  client (c+1) sid
 
 ignition :: Process ()
 ignition = do
     -- start the server
-    sPing <- spawnChannelLocal server
+    sid <- spawnLocal server
     -- start the client
-    liftIO $ threadDelay 2000000 -- wait a while
-    spawnLocal $ client sPing
-    liftIO $ threadDelay 1000000 -- wait a while
+    cid <- spawnLocal $ client 0 sid
+    return ()
+    liftIO $ threadDelay 100000-- wait a while
 
 main :: IO ()
 main = do
