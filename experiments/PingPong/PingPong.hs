@@ -6,43 +6,45 @@ import Control.Distributed.Process.Node
 import Network.Transport ( closeTransport )
 import Network.Transport.TCP
 
-server :: Process ()
-server = do
+server :: DynamicT -> Process ()
+server st = do
     (cid,x) :: (ProcessId,Int) <- expect
     liftIO $ putStrLn $ "Got  a Ping with value : " ++ (show x)
     case x of
-      5 -> do
+      4 -> do
         liftIO $ putStrLn $ "STOP"
-        return ()
+        liftIO $ st
       _ -> do
         send cid x
         liftIO $ putStrLn $ "Sent a Pong with value : " ++ (show x)
-        server
+        server st
 
-client :: Int -> ProcessId -> Process ()
-client 10 sid = do
+client :: DynamicT -> Int -> ProcessId -> Process ()
+client st 10 sid = do
   liftIO $ putStrLn "DONE"
-client c sid = do
+client st c sid = do
   me <- getSelfPid
   send sid (me,c)
   liftIO $ putStrLn $ "Sent a Ping with value : " ++ (show c)
   (v :: Int) <- expect
   liftIO $ putStrLn $ "Got  a Pong with value : " ++ (show v)
-  client (c+1) sid
+  client st (c+1) sid
 
-ignition :: Process ()
-ignition = do
+ignition :: DynamicT -> Process ()
+ignition st= do
     -- start the server
-    sid <- spawnLocal server
+    sid <- spawnLocal $ server st
     -- start the client
-    cid <- spawnLocal $ client 0 sid
+    cid <- spawnLocal $ client st 0 sid
     return ()
     liftIO $ threadDelay 100000-- wait a while
 
-main :: IO ()
-main = do
+type DynamicT = IO ()
+
+main :: DynamicT -> IO ()
+main st = do
     Right transport <- createTransport "127.0.0.1" "8080"
                             defaultTCPParameters
     node <- newLocalNode transport initRemoteTable
-    runProcess node ignition
+    runProcess node $ ignition st
     closeTransport transport
